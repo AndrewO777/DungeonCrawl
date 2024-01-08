@@ -1,0 +1,22 @@
+Layout classes:
+    Input
+    Game
+Fix all direction usage
+    Map
+    Room
+    main
+Fix main
+    main
+Rewrite RandGen
+    Map
+
+Move all static data,like room descriptions, into something else like markup or a database
+Create CharacterClass class, like the class of the character like warrior or rouge
+Split items into new classes
+Create random rolling weapons
+Create gear mods
+
+Figure out how saving will work
+Implement saving
+Implement infinite rooms
+Implement SDL
