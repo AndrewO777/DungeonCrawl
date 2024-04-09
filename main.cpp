@@ -36,7 +36,7 @@ int main()
 		{
 			cmdRdy = false;
 		}
-		if (input == "NORTH" || input == "N")
+		if (input == "NORTH")
 		{
 			if ((myPlayer.GetCur())->GetDirection(Room::e_Directions::NORTH) != 0)
 			{
@@ -47,7 +47,7 @@ int main()
 				std::cout << "Cant go that way!" << std::endl;
 			}
 		}
-		else if (input == "EAST" || input == "E")
+		else if (input == "EAST")
 		{
 			if ((myPlayer.GetCur())->GetDirection(Room::e_Directions::EAST) != 0)
 			{
@@ -58,7 +58,7 @@ int main()
 				std::cout << "Cant go that way!" << std::endl;
 			}
 		}
-		else if (input == "SOUTH" || input == "S")
+		else if (input == "SOUTH")
 		{
 			if ((myPlayer.GetCur())->GetDirection(Room::e_Directions::SOUTH) != 0)
 			{
@@ -69,7 +69,7 @@ int main()
 				std::cout << "Cant go that way!" << std::endl;
 			}
 		}
-		else if (input == "WEST" || input == "W")
+		else if (input == "WEST")
 		{
 			if ((myPlayer.GetCur())->GetDirection(Room::e_Directions::WEST) != 0)
 			{

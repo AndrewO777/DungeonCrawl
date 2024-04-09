@@ -3,7 +3,7 @@
 
 using std::string;
 
-string Input::m_CommandList[19] = {"CLOSE","EAST","NORTH","EXIT","WEST","SOUTH","UP","DOWN","TAKE","USE","CHECK","ATTACK","HELP","DEBUGMENU123","GODMODE123","HEALTH","INVENTORY","DROP","LOOK"};
+string Input::m_CommandList[19] = {"EAST","NORTH","EXIT","WEST","SOUTH","UP","DOWN","TAKE","USE","CHECK","ATTACK","HELP","DEBUGMENU123","GODMODE123","HEALTH","INVENTORY","DROP","LOOK","CLOSE"};
 
 void Input::ToUpper(string& str)
 {
@@ -13,10 +13,9 @@ void Input::ToUpper(string& str)
 	}
 }
 
-size_t Input::FindFirstSpace(const string& input)
+short Input::FindFirstSpace(const string& input)
 {
-    size_t i = 0;
-    for(; i < input.size(); ++i)
+    for(size_t i = 0; i < input.size(); ++i)
     {
         if (input[i] == ' ' && i > 0)
             return i;
@@ -24,30 +23,43 @@ size_t Input::FindFirstSpace(const string& input)
     return -1;
 }
 
+void Input::RemoveLeadingSpaces(string& input)
+{
+    for(size_t i = 0; i < input.size(); ++i)
+    {
+        if(input[i] == ' ')
+            input.erase(i,1);
+        else
+            break;
+    }
+}
+
 void Input::CommandPredict(std::string& input)
 {
     bool flag;
     ToUpper(input);
+    RemoveLeadingSpaces(input);
+    short firstSpace = FindFirstSpace(input);
     for (string command : m_CommandList)
     {
         flag = true;
-        if (FindFirstSpace(input) > command.size() || command == "GODMODE123" || command == "DEBUGMENU123")
+        if (firstSpace > (short)command.size() || command == "GODMODE123" || command == "DEBUGMENU123")
             continue;
-        size_t i = 0;
-        for (; i < input.size(); ++i)
+        for (short i = 0; i < command.size() &&
+            (i < firstSpace || (firstSpace == -1 && i < input.size())); ++i)
         {
             if (input[i] != command[i])
             {
                 flag = false;
-                continue;
+                break;
             }
         }
-        if (flag == true)
+        if (flag)
         {
-            for (size_t j = 0; j != i; ++j)
-            {
-                input[j] = command[j];
-            }
+            if(firstSpace != -1)
+                input = command + input.substr(firstSpace);
+            else
+                input = command;
             return;
         }
     }
