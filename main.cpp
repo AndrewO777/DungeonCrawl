@@ -3,8 +3,8 @@
 #include <string>
 #include <ctime>
 #include "Map.hpp"
-#include "Input.hpp"
 #include "Player.hpp"
+#include "Input.hpp"
 
 void ToUpper(std::string& input);
 int main()
@@ -152,12 +152,11 @@ int main()
 		{
 			if (input.length() > 7)
 			{
-				bool found = false;
+				bool found;
 				for (std::vector<Item>::iterator iter = myPlayer.m_Inv.begin(); iter != myPlayer.m_Inv.end(); ++iter)
 				{
-					std::string compare = (*iter).GetName();
-					ToUpper(compare);
-					if (input.substr(7) == compare)
+                    found = true;
+                    if(Input::CompareStrings(iter->GetName(), input.substr(7)))
 					{
 						if ((*iter).GetDamage() == 0)
 						{
@@ -170,6 +169,9 @@ int main()
 						found = true;
 						break;
 					}
+                    else {
+                        found = false;
+                    }
 				}
 				if (!found)
 				{

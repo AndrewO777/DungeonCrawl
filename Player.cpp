@@ -1,6 +1,6 @@
 #include <iostream>
 #include "Player.hpp"
-#include <algorithm>
+#include "Input.hpp"
 
 void Player::Move(Room* pRoom)
 {
@@ -52,35 +52,46 @@ Room* Player::GetCur()
 
 std::string Player::Check(std::string checkAt)
 {
-	bool found = false;
+	bool found;
 	Interact* pInter = 0;
 	Puzzle* pPuz = 0;
 	for (std::vector<Interact>::iterator iter = m_pCur->m_Interacts.begin(); iter != m_pCur->m_Interacts.end(); ++iter)
 	{
-		if (ToUpper((*iter).GetName()) == checkAt)
-		{
-			if ((*iter).m_HasTrap == true)
-			{
-				std::cout << (*iter).m_Trap.GetDesc() << std::endl;
-				m_Sanity -= (*iter).m_Trap.GetSanity();
-				(*iter).m_HasTrap = false;
-			}
-			std::cout << "You find " << (*iter).m_Contains.GetName() << " on/in the " << (*iter).GetName() << std::endl;
-			pInter = &(*iter);
-			found = true;
-			break;
-		}
+        found = true;
+        if(Input::CompareStrings(checkAt, iter->GetName()))
+        {
+            found = true;
+            if ((*iter).m_HasTrap)
+            {
+                std::cout << (*iter).m_Trap.GetDesc() << std::endl;
+                m_Sanity -= (*iter).m_Trap.GetSanity();
+                (*iter).m_HasTrap = false;
+            }
+            std::cout << "You find " << (*iter).m_Contains.GetName() << " on/in the " << (*iter).GetName() << std::endl;
+            pInter = &(*iter);
+            break;
+        }
+        else {
+            found = false;
+        }
 	}
-	for (std::vector<Puzzle>::iterator iter = m_pCur->m_Puzzles.begin(); iter != m_pCur->m_Puzzles.end(); ++iter)
-	{
-		if (ToUpper((*iter).GetName()) == checkAt)
-		{
-			std::cout << (*iter).m_CheckDesc << std::endl;
-			pPuz = &(*iter);
-			found = true;
-			break;
-		}
-	}
+    if(!found)
+    {
+        for (std::vector<Puzzle>::iterator iter = m_pCur->m_Puzzles.begin(); iter != m_pCur->m_Puzzles.end(); ++iter)
+        {
+            found = true;
+            if(Input::CompareStrings(checkAt, iter->GetName()))
+            {
+                found = true;
+                std::cout << (*iter).m_CheckDesc << std::endl;
+                pPuz = &(*iter);
+                break;
+            }
+            else {
+                found = false;
+            }
+        }
+    }
 	AttackedBy();
 	std::string input = "";
 	if (!found)
@@ -92,7 +103,7 @@ std::string Player::Check(std::string checkAt)
 		do
 		{
 			std::getline(std::cin, input);
-			input = ToUpper(input);
+            Input::CommandPredict(input);
 			if (input.length() > 5 && input.substr(0,4) == "TAKE")
 			{
 				if (pInter != 0)
@@ -113,11 +124,13 @@ std::string Player::Check(std::string checkAt)
 	return input;
 }
 
+//Find Item on Interact Object
 void Player::Take(std::string takeObj, Interact* interactObj)
 {
 	bool found = false;
-	if (ToUpper(interactObj->m_Contains.GetName()) == takeObj && takeObj != "NOTHING")
+	if (Input::CompareStrings(takeObj, interactObj->m_Contains.GetName()) && takeObj != "NOTHING")
 	{
+        takeObj = interactObj->m_Contains.GetName();
 		m_Inv.push_back(interactObj->m_Contains);
 		interactObj->m_Contains = Item(0,0,0,0,false,"nothing","");
 		found = true;
@@ -129,22 +142,7 @@ void Player::Take(std::string takeObj, Interact* interactObj)
 	}
 	if (!found)
 	{
-		for (std::vector<Item>::iterator iter = m_pCur->m_Inv.begin(); iter != m_pCur->m_Inv.end(); ++iter)
-		{
-			if (ToUpper((*iter).GetName()) == takeObj)
-			{
-				m_Inv.push_back(*iter);
-				m_pCur->m_RoomDesc.erase(m_pCur->m_RoomDesc.find((*iter).GetDesc()), (*iter).GetDesc().length());
-				m_pCur->m_Inv.erase(iter);
-				found = true;
-				if (takeObj == "CROSS NECKLACE")
-				{
-					m_Negate = 1;
-				}
-				std::cout << "Taken." << std::endl;
-				break;
-			}
-		}
+        Take(takeObj);
 	}
 	if (!found)
 	{
@@ -156,7 +154,7 @@ void Player::Take(std::string takeObj, Interact* interactObj)
 void Player::Take(std::string takeObj, Puzzle* puzzleObj)
 {
 	bool found = false;
-	if (ToUpper(puzzleObj->m_Contains.GetName()) == takeObj && takeObj != "NOTHING")
+	if (Input::CompareStrings(takeObj, puzzleObj->m_Contains.GetName()) && takeObj != "NOTHING")
 	{
 		bool unlocked = false;
 		if (puzzleObj->GetName() == "Sloted Chest" && puzzleObj->m_Lock == 3)
@@ -187,7 +185,7 @@ void Player::Take(std::string takeObj, Puzzle* puzzleObj)
 	{
 		for (std::vector<Item>::iterator iter = m_pCur->m_Inv.begin(); iter != m_pCur->m_Inv.end(); ++iter)
 		{
-			if (ToUpper((*iter).GetName()) == takeObj)
+			if (Input::CompareStrings(takeObj,iter->GetName()))
 			{
 				m_Inv.push_back(*iter);
 				m_pCur->m_RoomDesc.erase(m_pCur->m_RoomDesc.find((*iter).GetDesc()), (*iter).GetDesc().length());
@@ -216,22 +214,30 @@ std::string Player::Look()
 
 void Player::Take(std::string takeObj)
 {
-	bool found = false;
+	bool found;
 	for (std::vector<Item>::iterator iter = m_pCur->m_Inv.begin(); iter != m_pCur->m_Inv.end(); ++iter)
 	{
-		if (ToUpper((*iter).GetName()) == takeObj)
-		{
-			m_Inv.push_back(*iter);
-			m_pCur->m_RoomDesc.erase(m_pCur->m_RoomDesc.find((*iter).GetDesc()), (*iter).GetDesc().length());
-			m_pCur->m_Inv.erase(iter);
-			found = true;
-			if (takeObj == "CROSS NECKLACE")
-			{
-				m_Negate = 1;
-			}
-			std::cout << "Taken." << std::endl;
-			break;
-		}
+        found = true;
+        for(size_t i = 0; i < takeObj.size() && i < (*iter).GetName().size(); ++i)
+        {
+            if(takeObj[i] != toupper((*iter).GetName()[i]))
+            {
+                found = false;
+            }
+        }
+        if(found)
+        {
+            takeObj = (*iter).GetName();
+            m_Inv.push_back(*iter);
+            m_pCur->m_RoomDesc.erase(m_pCur->m_RoomDesc.find((*iter).GetDesc()), (*iter).GetDesc().length());
+            m_pCur->m_Inv.erase(iter);
+            if (takeObj == "CROSS NECKLACE")
+            {
+                m_Negate = 1;
+            }
+            std::cout << "Taken." << std::endl;
+            break;
+        }
 	}
 	if (!found)
 	{
@@ -301,7 +307,7 @@ void Player::Use(std::string useObj)
 	{
 		if (m_pCur->m_Puzzles[0].GetName() == "Sloted Chest")
 		{
-			if (useObj == "SAPPHIRE" || useObj == "RUBY" || useObj == "EMERALD")
+			if(Input::CompareStrings(useObj,"SAPPHIRE") || Input::CompareStrings(useObj,"RUBY") || Input::CompareStrings(useObj,"EMERALD"))
 			{
 				for (std::vector<Item>::iterator iter = m_Inv.begin(); iter != m_Inv.end(); ++iter)
 				{
@@ -319,7 +325,7 @@ void Player::Use(std::string useObj)
 		}
 		else if (m_pCur->m_Puzzles[0].GetName() == "Safe")
 		{
-			if (useObj == "SAFE KEY")
+			if(Input::CompareStrings(useObj,"SAFE KEY"))
 			{
 				for (std::vector<Item>::iterator iter = m_Inv.begin(); iter != m_Inv.end(); ++iter)
 				{
@@ -337,7 +343,7 @@ void Player::Use(std::string useObj)
 		}
 		else if (m_pCur->m_Puzzles[0].GetName() == "Trapdoor")
 		{
-			if (useObj == "TRAPDOOR KEY")
+			if(Input::CompareStrings(useObj,"TRAPDOOR KEY"))
 			{
 				for (std::vector<Item>::iterator iter = m_Inv.begin(); iter != m_Inv.end(); ++iter)
 				{
@@ -355,7 +361,7 @@ void Player::Use(std::string useObj)
 		}
 		else if (m_pCur->m_Puzzles[0].GetName() == "Front Door")
 		{
-			if (useObj == "FRONT DOOR KEY")
+			if(Input::CompareStrings(useObj,"FRONT DOOR KEY"))
 			{
 				for (std::vector<Item>::iterator iter = m_Inv.begin(); iter != m_Inv.end(); ++iter)
 				{
@@ -374,22 +380,22 @@ void Player::Use(std::string useObj)
 	}
 	for (std::vector<Item>::iterator iter = m_Inv.begin(); iter != m_Inv.end(); ++iter)
 	{
-		if (ToUpper((*iter).GetName()) == useObj)
+		if (Input::CompareStrings(iter->GetName(),useObj))
 		{
-			if ((*iter).GetHeal() > 0 || (*iter).GethealSanity() > 0)
+			if (iter->GetHeal() > 0 || iter->GethealSanity() > 0)
 			{
 				if (m_Health < 5)
 				{
-					m_Health += (*iter).GetHeal();
+					m_Health += iter->GetHeal();
 				}
 				if (m_Sanity < 7)
 				{
-					m_Sanity += (*iter).GethealSanity();
+					m_Sanity += iter->GethealSanity();
 				}
 				m_Inv.erase(iter);
 				std::cout << "Used." << std::endl;
 			}
-			else if ((*iter).GetName() == "Holy Water")
+			else if (Input::CompareStrings(iter->GetName(),"Holy Water"))
 			{
 				if (m_pCur->m_Enemies.size() > 0)
 				{
@@ -486,74 +492,70 @@ void Player::AttackedBy()
 
 void Player::Attack(Item& wep)
 {
-	if (m_pCur->m_Enemies.size() > 0)
-	{
-		if (m_pCur->m_Enemies[0].m_Health > 0)
-		{
-			if (m_pCur->m_Enemies[0].m_Undead)
-			{
-				if (wep.GetUndead())
-				{
-					std::cout << "You attack dealing " << wep.GetDamage() << " damage." << std::endl;
-					m_pCur->m_Enemies[0].m_Health -= wep.GetDamage();
-					if (m_pCur->m_Enemies[0].m_Health < 0)
-					{
-						m_pCur->m_Enemies[0].Die();
-						m_pCur->m_RoomDesc.erase(m_pCur->m_RoomDesc.find(m_pCur->m_Enemies[0].GetDesc()), m_pCur->m_Enemies[0].GetDesc().length());
-					}
-					if (wep.m_AttackUses == 0)
-					{
-						for (std::vector<Item>::iterator iter = m_Inv.begin(); iter != m_Inv.end(); ++iter)
-						{
-							if (ToUpper((*iter).GetName()) == ToUpper(wep.GetName()))
-							{
-								std::cout << "Your " << wep.GetName() << " broke." << std::endl;
-								m_Inv.erase(iter);
-								break;
-							}
-						}
-					}
-					wep.m_AttackUses -= 1;
-				}
-
-				else
-				{
-					std::cout << "This weapon can't hurt undead." << std::endl;
-				}
-			}
-			else
-			{
-				std::cout << "You attack dealing " << wep.GetDamage() << " damage." << std::endl;
-				m_pCur->m_Enemies[0].m_Health -= wep.GetDamage();
-				if (m_pCur->m_Enemies[0].m_Health < 0)
-				{
-					m_pCur->m_Enemies[0].Die();
-					m_pCur->m_RoomDesc.erase(m_pCur->m_RoomDesc.find(m_pCur->m_Enemies[0].GetDesc()), m_pCur->m_Enemies[0].GetDesc().length());
-				}
-				if (wep.m_AttackUses == 0)
-				{
-					for (std::vector<Item>::iterator iter = m_Inv.begin(); iter != m_Inv.end(); ++iter)
-					{
-						if (ToUpper((*iter).GetName()) == ToUpper(wep.GetName()))
-						{
-							std::cout << "Your " << wep.GetName() << " broke." << std::endl;
-							m_Inv.erase(iter);
-							break;
-						}
-					}
-				}
-				wep.m_AttackUses -= 1;
-			}
-		}
-		else
-		{
-			std::cout << "There is nothing to attack." << std::endl;
-		}
-	}
-	else
+	if (m_pCur->m_Enemies.size() <=  0)
 	{
 		std::cout << "There is nothing to attack." << std::endl;
-	}
+        return;
+    }
+	if (m_pCur->m_Enemies[0].m_Health <= 0)
+	{
+        std::cout << "There is nothing to attack." << std::endl;
+        return;
+    }
+    if (m_pCur->m_Enemies[0].m_Undead)
+    {
+        if (wep.GetUndead())
+        {
+            std::cout << "You attack dealing " << wep.GetDamage() << " damage." << std::endl;
+            m_pCur->m_Enemies[0].m_Health -= wep.GetDamage();
+            if (m_pCur->m_Enemies[0].m_Health < 0)
+            {
+                m_pCur->m_Enemies[0].Die();
+                m_pCur->m_RoomDesc.erase(m_pCur->m_RoomDesc.find(m_pCur->m_Enemies[0].GetDesc()), m_pCur->m_Enemies[0].GetDesc().length());
+            }
+            if (wep.m_AttackUses == 0)
+            {
+                for (std::vector<Item>::iterator iter = m_Inv.begin(); iter != m_Inv.end(); ++iter)
+                {
+                    if (ToUpper((*iter).GetName()) == ToUpper(wep.GetName()))
+                    {
+                        std::cout << "Your " << wep.GetName() << " broke." << std::endl;
+                        m_Inv.erase(iter);
+                        break;
+                    }
+                }
+            }
+            wep.m_AttackUses -= 1;
+        }
+
+        else
+        {
+            std::cout << "This weapon can't hurt undead." << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "You attack dealing " << wep.GetDamage() << " damage." << std::endl;
+        m_pCur->m_Enemies[0].m_Health -= wep.GetDamage();
+        if (m_pCur->m_Enemies[0].m_Health < 0)
+        {
+            m_pCur->m_Enemies[0].Die();
+            m_pCur->m_RoomDesc.erase(m_pCur->m_RoomDesc.find(m_pCur->m_Enemies[0].GetDesc()), m_pCur->m_Enemies[0].GetDesc().length());
+        }
+        if (wep.m_AttackUses == 0)
+        {
+            for (std::vector<Item>::iterator iter = m_Inv.begin(); iter != m_Inv.end(); ++iter)
+            {
+                if (ToUpper((*iter).GetName()) == ToUpper(wep.GetName()))
+                {
+                    std::cout << "Your " << wep.GetName() << " broke." << std::endl;
+                    m_Inv.erase(iter);
+                    break;
+                }
+            }
+        }
+        wep.m_AttackUses -= 1;
+    }
 	AttackedBy();
 }
 
@@ -563,7 +565,7 @@ void Player::Help()
 	std::cout << "'Health' - Will show you your health and sanity stats. If either hit 0 you lose." << std::endl;
 	std::cout << "'Inventory' - Will display what's in your inventory." << std::endl;
 	std::cout << "'Check (object to check here)' - If you type 'Check box' it will check the box object in the room if it exists. Check shows what is on/in the object you want to check." << std::endl;
-	std::cout << "'Attack (weapon to attack with)' - If you type 'Attack Sacrificial Dagger' you will attack any enemy in the room with the sacrificial dagger item." << std::endl;
+	std::cout << "'Attack (weapon to attack with)' - If you type 'Attack Dagger' you will attack any enemy in the room with the sacrificial dagger item." << std::endl;
 	std::cout << "'Use (item to use)' - If you type 'Use bread' it will heal your health stat. The Use command is for using items like holy water, keys, gems, and etc." << std::endl;
 	std::cout << "'Drop (item to drop)' - If you type 'Drop berries' you will drop berries on the floor in the room you are currently in, you can always pick items back up later with the Take command" << std::endl;
 	std::cout << "'Take (item to take)' - If you type 'Take bread' you will take bread if it is in the room. If you want to take something from an object you checked, you have to use the take command right after using the check command on the object you want to take something from for example, 'check box' then you would type something like 'take bread'" << std::endl;

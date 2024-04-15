@@ -34,27 +34,26 @@ void Input::RemoveLeadingSpaces(string& input)
     }
 }
 
+bool Input::CompareStrings(const std::string& str1, const std::string& str2)
+{
+    for(size_t i = 0; i < str1.size() && i < str2.size(); ++i)
+    {
+        if(toupper(str1[i]) != toupper(str2[i]))
+            return false;
+    }
+    return true;
+}
+
 void Input::CommandPredict(std::string& input)
 {
-    bool flag;
     ToUpper(input);
     RemoveLeadingSpaces(input);
     short firstSpace = FindFirstSpace(input);
-    for (string command : m_CommandList)
+    for(string command : m_CommandList)
     {
-        flag = true;
-        if (firstSpace > (short)command.size() || command == "GODMODE123" || command == "DEBUGMENU123")
+        if(firstSpace > (short)command.size() || command == "DEBUGMENU123" || command == "GODMODE123")
             continue;
-        for (short i = 0; i < command.size() &&
-            (i < firstSpace || (firstSpace == -1 && i < input.size())); ++i)
-        {
-            if (input[i] != command[i])
-            {
-                flag = false;
-                break;
-            }
-        }
-        if (flag)
+        if(CompareStrings(firstSpace != -1 ? input.substr(0,firstSpace) : input,command))
         {
             if(firstSpace != -1)
                 input = command + input.substr(firstSpace);

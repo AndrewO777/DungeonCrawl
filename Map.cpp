@@ -693,7 +693,7 @@ void Map::GiveDescInter(Room* myRoom)
 
 void Map::CreateItems()
 {
-	m_ItemList.push_back(Item(0,0,6,0,false,"Sacrificial Dagger", " There is a sacrificial dagger laying on the floor."));
+	m_ItemList.push_back(Item(0,0,6,0,false,"Dagger", " There is a dagger laying on the floor."));
 	m_ItemList.push_back(Item(0,0,4,0,true,"Wooden Stake", " There is a wooden stake laying on the floor."));
 	m_ItemList.push_back(Item(0,2,3,0,false,"Wine", " You see a bottle of wine on the floor."));
 	m_ItemList[2].m_AttackUses = 1;
